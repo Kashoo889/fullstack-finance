@@ -1,5 +1,14 @@
 {
-  "dependencies": {
-    "mongodb": "^7.0.0"
+  "name": "kashif-hisab-kitab-root",
+  "version": "1.0.0",
+  "description": "Root deployment for Hostinger",
+  "scripts": {
+    "start": "cd backend && node server.js",
+    "build": "cd frontend && npm install && npm run build",
+    "postinstall": "cd backend && npm install"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18"
   }
 }
