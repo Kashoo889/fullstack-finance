@@ -8,6 +8,7 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "build": "cd frontend && npm install && npm run build",
+    "postinstall": "npm run build",
     "seed:admin": "node scripts/seedAdmin.js",
     "seed:user": "node scripts/seedUser.js",
     "update:user-role": "node scripts/updateUserRole.js"
