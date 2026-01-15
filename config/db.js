@@ -13,7 +13,7 @@ const connectDB = async () => {
 
     // Replace <db_password> placeholder if present
     let mongoUri = process.env.MONGO_URI.replace('<db_password>', process.env.DB_PASSWORD || '');
-    
+
     // Add database name if not present in URI
     const dbName = process.env.DB_NAME || 'kashif-hisab-kitab';
     // Check if database name is already in URI (format: ...mongodb.net/dbname?...)
@@ -27,7 +27,7 @@ const connectDB = async () => {
     const options = {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      // serverSelectionTimeoutMS: 5000, // Removed to allow default 30s
       socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
     };
 
@@ -60,7 +60,7 @@ const connectDB = async () => {
 
   } catch (error) {
     console.error('❌ MongoDB Connection Error:', error.message);
-    
+
     // Log detailed error in development
     if (process.env.NODE_ENV === 'development') {
       console.error('Full error:', error);
