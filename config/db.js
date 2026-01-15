@@ -23,12 +23,16 @@ const connectDB = async () => {
       mongoUri = mongoUri.replace(/(mongodb\.net\/)(\?|$)/, `$1${dbName}$2`);
     }
 
+    // DEBUG: Log the URI we are trying to connect to (Mask password)
+    const logUri = mongoUri.replace(/:([^:@]+)@/, ':****@');
+    console.log(`🔌 Attempting to connect to: ${logUri}`);
+
     // Connection options for MongoDB Atlas
     const options = {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      // serverSelectionTimeoutMS: 5000, // Removed to allow default 30s
-      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+      // serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     };
 
     const conn = await mongoose.connect(mongoUri, options);

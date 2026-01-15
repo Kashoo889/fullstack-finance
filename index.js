@@ -18,8 +18,12 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// ... imports
+
 // Initialize Express app
 const app = express();
+
+let dbConnectionError = null;
 
 // Middleware
 app.use(express.json());
@@ -27,25 +31,16 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check route (CRITICAL for debugging 503)
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ success: true, message: 'Server is running', env: process.env.NODE_ENV });
+  res.status(200).json({
+    success: true,
+    message: 'Server is running',
+    env: process.env.NODE_ENV,
+    dbStatus: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+    dbError: dbConnectionError
+  });
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/saudi', saudiRoutes);
-app.use('/api/special', specialRoutes);
-app.use('/api/traders', traderRoutes);
-
-// Serve static files from frontend/dist
-app.use(express.static(path.join(__dirname, 'frontend/dist')));
-
-// Handle React routing, return all requests to React app
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend/dist', 'index.html'));
-});
-
-// Error handler middleware
-app.use(errorHandler);
+// ... routes ...
 
 // Connect to database and start server
 const startServer = async () => {
@@ -54,6 +49,7 @@ const startServer = async () => {
       await connectDB();
     } else {
       console.warn('⚠️ MONGO_URI not found in environment variables');
+      dbConnectionError = 'MONGO_URI missing';
     }
 
     const PORT = process.env.PORT || 3000;
@@ -63,6 +59,7 @@ const startServer = async () => {
 
   } catch (error) {
     console.error('❌ Failed to start server:', error.message);
+    dbConnectionError = error.message;
     // Do NOT exit process on DB error for Hostinger, keeps server alive for logs
   }
 };
