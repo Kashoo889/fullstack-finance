@@ -21,7 +21,7 @@ import traderRoutes from './routes/traderRoutes.js';
 dotenv.config();
 
 // Validate required environment variables
-const requiredEnvVars = ['MONGO_URI', 'PORT'];
+const requiredEnvVars = ['MONGO_URI'];
 const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {
