@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/authRoutes.js';
 import saudiRoutes from './routes/saudiRoutes.js';
 import specialRoutes from './routes/specialRoutes.js';
-// import traderRoutes from './routes/traderRoutes.js';
+import traderRoutes from './routes/traderRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -43,7 +43,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/saudi', saudiRoutes);
 app.use('/api/special', specialRoutes);
-// app.use('/api/traders', traderRoutes);
+app.use('/api/traders', traderRoutes);
 
 // Serve static files from frontend/dist
 app.use(express.static(path.join(__dirname, 'frontend/dist')));
