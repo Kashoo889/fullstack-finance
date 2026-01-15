@@ -25,7 +25,12 @@ export const protect = asyncHandler(async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_here');
 
     // Get user from token
-    req.user = await User.findById(decoded.userId).select('-password');
+    req.user = await User.findById(decoded.userId);
+
+    // Remove password from request object
+    if (req.user) {
+      delete req.user.password;
+    }
 
     if (!req.user) {
       return res.status(401).json({

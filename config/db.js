@@ -1,78 +1,29 @@
-import mongoose from 'mongoose';
+import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
 
-/**
- * Connect to MongoDB Atlas
- * Production-ready with proper error handling and graceful exit
- */
-const connectDB = async () => {
+dotenv.config();
+
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
+
+// Test connection
+const checkConnection = async () => {
   try {
-    // Check if MONGO_URI is provided
-    if (!process.env.MONGO_URI) {
-      throw new Error('MONGO_URI is not defined in environment variables');
-    }
-
-    // Replace <db_password> placeholder if present
-    let mongoUri = process.env.MONGO_URI.replace('<db_password>', process.env.DB_PASSWORD || '');
-
-    // Add database name if not present in URI
-    const dbName = process.env.DB_NAME || 'kashif-hisab-kitab';
-    // Check if database name is already in URI (format: ...mongodb.net/dbname?...)
-    const hasDbName = mongoUri.match(/mongodb\.net\/[^/?]+/);
-    if (!hasDbName) {
-      // Insert database name before query parameters or at end
-      mongoUri = mongoUri.replace(/(mongodb\.net\/)(\?|$)/, `$1${dbName}$2`);
-    }
-
-    // DEBUG: Log the URI we are trying to connect to (Mask password)
-    const logUri = mongoUri.replace(/:([^:@]+)@/, ':****@');
-    console.log(`🔌 Attempting to connect to: ${logUri}`);
-
-    // Connection options for MongoDB Atlas
-    const options = {
-      family: 4, // Force IPv4
-      socketTimeoutMS: 45000,
-    };
-
-    const conn = await mongoose.connect(mongoUri, options);
-
-    console.log(`✅ MongoDB Atlas Connected: ${conn.connection.host}`);
-    console.log(`📊 Database: ${conn.connection.name}`);
-
-    // Handle connection events
-    mongoose.connection.on('error', (err) => {
-      console.error('❌ MongoDB connection error:', err);
-    });
-
-    mongoose.connection.on('disconnected', () => {
-      console.warn('⚠️  MongoDB disconnected');
-    });
-
-    // Graceful shutdown
-    process.on('SIGINT', async () => {
-      await mongoose.connection.close();
-      console.log('MongoDB connection closed due to app termination');
-      process.exit(0);
-    });
-
-    process.on('SIGTERM', async () => {
-      await mongoose.connection.close();
-      console.log('MongoDB connection closed due to app termination');
-      process.exit(0);
-    });
-
+    const connection = await pool.getConnection();
+    console.log('✅ Connected to MySQL Database');
+    connection.release();
   } catch (error) {
-    console.error('❌ MongoDB Connection Error:', error.message);
-
-    // Log detailed error in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Full error:', error);
-    }
-
-    // Graceful exit with error code
-    console.error('Exiting application due to database connection failure...');
-    process.exit(1);
+    console.error('❌ MySQL Connection Failed:', error.message);
   }
 };
 
-export default connectDB;
+checkConnection();
 
+export default pool;

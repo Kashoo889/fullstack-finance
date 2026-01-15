@@ -1,68 +1,32 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import db from '../config/db.js';
 
-const userSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, 'Name is required'],
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: [true, 'Email is required'],
-      unique: true,
-      lowercase: true,
-      trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
-    },
-    password: {
-      type: String,
-      required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
-      select: false, // Don't return password by default
-    },
-    role: {
-      type: String,
-      enum: ['admin', 'user'],
-      default: 'user',
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+const User = {
+  create: async ({ name, email, password, role = 'user' }) => {
+    const query = `
+      INSERT INTO users (name, email, password, role)
+      VALUES (?, ?, ?, ?)
+    `;
+    const [result] = await db.execute(query, [name, email, password, role]);
+    return { id: result.insertId, name, email, role };
   },
-  {
-    timestamps: true,
-  }
-);
 
-// Hash password before saving
-userSchema.pre('save', async function (next) {
-  // Only hash if password is modified
-  if (!this.isModified('password')) {
-    return next();
-  }
+  findByEmail: async (email) => {
+    const query = 'SELECT * FROM users WHERE email = ?';
+    const [rows] = await db.execute(query, [email]);
+    return rows[0];
+  },
 
-  try {
-    // Hash password with cost of 10
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
+  findById: async (id) => {
+    const query = 'SELECT * FROM users WHERE id = ?';
+    const [rows] = await db.execute(query, [id]);
+    return rows[0];
+  },
 
-// Method to compare password
-userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+  updatePassword: async (id, hashedPassword) => {
+    const query = 'UPDATE users SET password = ? WHERE id = ?';
+    const [result] = await db.execute(query, [hashedPassword, id]);
+    return result.affectedRows > 0;
+  },
 };
 
-// Index for faster queries
-userSchema.index({ email: 1 });
-
-const User = mongoose.model('User', userSchema);
-
 export default User;
-

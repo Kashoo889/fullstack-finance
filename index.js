@@ -1,16 +1,16 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
-import connectDB from './config/db.js';
+// import mongoose from 'mongoose'; // Removed
+// import connectDB from './config/db.js'; // Removed
 import { errorHandler } from './middleware/errorHandler.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 // Import routes
 import authRoutes from './routes/authRoutes.js';
-import saudiRoutes from './routes/saudiRoutes.js';
-import specialRoutes from './routes/specialRoutes.js';
-import traderRoutes from './routes/traderRoutes.js';
+// import saudiRoutes from './routes/saudiRoutes.js';
+// import specialRoutes from './routes/specialRoutes.js';
+// import traderRoutes from './routes/traderRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -42,9 +42,9 @@ app.get('/api/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/saudi', saudiRoutes);
-app.use('/api/special', specialRoutes);
-app.use('/api/traders', traderRoutes);
+// app.use('/api/saudi', saudiRoutes);
+// app.use('/api/special', specialRoutes);
+// app.use('/api/traders', traderRoutes);
 
 // Serve static files from frontend/dist
 app.use(express.static(path.join(__dirname, 'frontend/dist')));
@@ -57,26 +57,13 @@ app.get('*', (req, res) => {
 // Error handler middleware
 app.use(errorHandler);
 
-// Connect to database and start server
-const startServer = async () => {
-  try {
-    if (process.env.MONGO_URI) {
-      await connectDB();
-    } else {
-      console.warn('⚠️ MONGO_URI not found in environment variables');
-      dbConnectionError = 'MONGO_URI missing';
-    }
-
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-    });
-
-  } catch (error) {
-    console.error('❌ Failed to start server:', error.message);
-    dbConnectionError = error.message;
-    // Do NOT exit process on DB error for Hostinger, keeps server alive for logs
-  }
+// Connect to MySQL (handled by pool) and start server
+const startServer = () => {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🗄️  MySQL Database configured`);
+  });
 };
 
 startServer();
