@@ -15,7 +15,7 @@ const seedAdmin = async () => {
       '<db_password>',
       process.env.DB_PASSWORD || ''
     );
-    
+
     const dbName = process.env.DB_NAME || 'kashif-hisab-kitab';
     let finalUri = mongoUri;
     if (!mongoUri.match(/mongodb\.net\/[^/?]+/)) {
@@ -30,7 +30,7 @@ const seedAdmin = async () => {
     console.log('✅ Connected to MongoDB');
 
     // Check if admin user already exists
-    const existingAdmin = await User.findOne({ email: 'kashifadmin@gmail.com' });
+    const existingAdmin = await User.findOne({ email: 'mkashifbukhari10@gmail.com' });
 
     if (existingAdmin) {
       console.log('⚠️  Admin user already exists');
@@ -43,8 +43,8 @@ const seedAdmin = async () => {
     // Create admin user
     const adminUser = await User.create({
       name: 'Admin',
-      email: 'kashifadmin@gmail.com',
-      password: 'Kashif@123',
+      email: 'mkashifbukhari10@gmail.com',
+      password: 'Abid@uncle',
       role: 'admin',
       isActive: true,
     });
