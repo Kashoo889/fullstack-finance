@@ -29,9 +29,7 @@ const connectDB = async () => {
 
     // Connection options for MongoDB Atlas
     const options = {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      // serverSelectionTimeoutMS: 5000,
+      family: 4, // Force IPv4
       socketTimeoutMS: 45000,
     };
 
