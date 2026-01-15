@@ -33,8 +33,8 @@ export const getBankLedgerEntries = asyncHandler(async (req, res) => {
   const bank = await Bank.findById(req.params.bankId);
   console.log('Found Bank:', bank);
 
-  // if (!bank || bank.trader_id != req.params.traderId) {
-  if (!bank) {
+  // Validate ownership
+  if (!bank || bank.trader_id != req.params.traderId) {
     return res.status(404).json({
       success: false,
       error: 'Bank not found',
