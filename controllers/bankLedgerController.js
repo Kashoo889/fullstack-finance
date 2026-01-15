@@ -35,10 +35,15 @@ export const getBankLedgerEntries = asyncHandler(async (req, res) => {
 
   // if (!bank || bank.trader_id != req.params.traderId) {
   if (!bank) {
-    console.log('Bank not found or ID mismatch (Strict check disabled)');
-    return res.status(404).json({
+    // Debugging: fetch all banks to see what exists
+    const allBanksQuery = 'SELECT id, name, trader_id FROM banks';
+    const [allBanks] = await db.execute(allBanksQuery);
+
+    console.log('Bank not found. Available banks:', allBanks);
+
+    return res.status(400).json({
       success: false,
-      error: `Bank not found. Searched ID: ${req.params.bankId || 'undefined'}. Params: ${JSON.stringify(req.params)}`,
+      error: `Debug: Bank ID ${req.params.bankId} not found. Available Banks: ${JSON.stringify(allBanks)}. Params: ${JSON.stringify(req.params)}`,
     });
   }
 
