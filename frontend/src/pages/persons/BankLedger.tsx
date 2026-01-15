@@ -95,12 +95,12 @@ const BankLedger = () => {
           return;
         }
 
-        // Normalize banks array (ensure all banks have id instead of _id)
+        // Normalize banks array (ensure all banks have id)
         const normalizedBanks = (traderData.banks || []).map((bank: any) => {
           const { _id, ...rest } = bank;
           return {
             ...rest,
-            id: bank.id || _id?.toString() || '',
+            id: bank.id || _id || '', // Keep original type if possible, or fallback
           };
         });
 
@@ -112,11 +112,16 @@ const BankLedger = () => {
         setTrader(normalizedTrader);
 
         // Find bank in trader's banks
-        const foundBank = normalizedBanks.find((b: any) => b.id === bankId);
+        // bankId from params is string, bank.id from DB is number. Convert param to number.
+        const bankIdNum = Number(bankId);
+        const foundBank = normalizedBanks.find((b: any) => b.id === bankIdNum);
+
         if (!foundBank) {
           console.error('Bank not found:', {
-            bankId,
-            banks: normalizedBanks.map((b: any) => ({ id: b.id, name: b.name }))
+            searchedId: bankIdNum,
+            searchedIdType: typeof bankIdNum,
+            availableBanks: normalizedBanks.map((b: any) => ({ id: b.id, type: typeof b.id, name: b.name })),
+            rawParam: bankId
           });
           setIsLoading(false);
           return;
@@ -127,13 +132,12 @@ const BankLedger = () => {
         // Fetch ledger entries
         const ledgerData = await bankLedgerAPI.getAll(traderId, bankId);
 
-        // Normalize entries (ensure id and safe numeric fields)
+        // Normalize entries (ensure id)
         const normalizedEntries = (ledgerData.entries || []).map((entry: any) => {
-          // Normalize entry (ensure id instead of _id)
           const { _id, ...rest } = entry;
           return {
             ...rest,
-            id: entry.id || _id?.toString() || '',
+            id: entry.id || _id || '',
             amountAdded: entry.amountAdded || 0,
             amountWithdrawn: entry.amountWithdrawn || 0,
             referencePerson: (entry as any).referencePerson || '',
