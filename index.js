@@ -1,7 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
-// import mongoose from 'mongoose'; // Removed
-// import connectDB from './config/db.js'; // Removed
+// Auto-create .env for Hostinger (since gitignore blocks it)
+import './scripts/setupEnv.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
