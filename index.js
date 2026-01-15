@@ -40,7 +40,22 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ... routes ...
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/saudi', saudiRoutes);
+app.use('/api/special', specialRoutes);
+app.use('/api/traders', traderRoutes);
+
+// Serve static files from frontend/dist
+app.use(express.static(path.join(__dirname, 'frontend/dist')));
+
+// Handle React routing, return all requests to React app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend/dist', 'index.html'));
+});
+
+// Error handler middleware
+app.use(errorHandler);
 
 // Connect to database and start server
 const startServer = async () => {
