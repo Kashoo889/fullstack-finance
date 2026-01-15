@@ -38,7 +38,7 @@ export const getBankLedgerEntries = asyncHandler(async (req, res) => {
     console.log('Bank not found or ID mismatch (Strict check disabled)');
     return res.status(404).json({
       success: false,
-      error: 'Bank not found',
+      error: `Bank not found. Searched ID: ${req.params.bankId || 'undefined'}. Params: ${JSON.stringify(req.params)}`,
     });
   }
 
