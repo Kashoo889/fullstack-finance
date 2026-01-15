@@ -2,7 +2,7 @@
  * API utilities for backend integration
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Helper to ensure /api suffix is always present
 export const getApiUrl = (endpoint: string) => {
@@ -162,12 +162,12 @@ export const tradersAPI = {
   getOne: async (id: string) => {
     const data = await apiRequest(`/traders/${id}`);
     const trader = normalizeEntry(data.data);
-    
+
     // Normalize banks array if present
     if (trader.banks && Array.isArray(trader.banks)) {
       trader.banks = trader.banks.map((bank: any) => normalizeEntry(bank));
     }
-    
+
     return trader;
   },
 
