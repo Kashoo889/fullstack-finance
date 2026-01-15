@@ -26,11 +26,16 @@ const mapEntry = (entry) => {
  * @access  Public
  */
 export const getBankLedgerEntries = asyncHandler(async (req, res) => {
+  console.log('--- getBankLedgerEntries ---');
+  console.log('Params:', req.params);
+
   // Verify bank exists and belongs to trader
   const bank = await Bank.findById(req.params.bankId);
+  console.log('Found Bank:', bank);
 
   // if (!bank || bank.trader_id != req.params.traderId) {
   if (!bank) {
+    console.log('Bank not found or ID mismatch (Strict check disabled)');
     return res.status(404).json({
       success: false,
       error: 'Bank not found',

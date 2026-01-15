@@ -69,11 +69,16 @@ export const getBanks = asyncHandler(async (req, res) => {
  * @access  Public
  */
 export const getBank = asyncHandler(async (req, res) => {
+  console.log('--- getBank ---');
+  console.log('Params:', req.params);
+
   const bank = await Bank.findById(req.params.bankId);
+  console.log('Found Bank:', bank);
 
   // Validate ownership
   // if (!bank || bank.trader_id != req.params.traderId) {
   if (!bank) {
+    console.log('Bank not found');
     return res.status(404).json({
       success: false,
       error: 'Bank not found',
