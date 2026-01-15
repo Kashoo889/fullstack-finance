@@ -39,12 +39,12 @@ export const protect = asyncHandler(async (req, res, next) => {
       });
     }
 
-    if (!req.user.isActive) {
-      return res.status(401).json({
-        success: false,
-        error: 'Account is deactivated',
-      });
-    }
+    // if (!req.user.isActive) {
+    //   return res.status(401).json({
+    //     success: false,
+    //     error: 'Account is deactivated',
+    //   });
+    // }
 
     next();
   } catch (error) {
