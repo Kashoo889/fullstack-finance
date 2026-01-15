@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import db from '../config/db.js';
 
 const initDb = async () => {
@@ -14,12 +15,28 @@ const initDb = async () => {
     `;
 
     await db.execute(createUsersTable);
-    console.log('✅ Users table created or already exists');
-    process.exit(0);
+    console.log('✅ Users table created or verified');
+
+    // Seed Admin User
+    const [rows] = await db.execute('SELECT * FROM users WHERE email = ?', ['mkashifbukhari10@gmail.com']);
+
+    if (rows.length === 0) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash('Abid@uncle', salt);
+
+      await db.execute(
+        'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+        ['Admin', 'mkashifbukhari10@gmail.com', hashedPassword, 'admin']
+      );
+      console.log('✅ Admin user seeded successfully');
+    } else {
+      console.log('ℹ️  Admin user already exists');
+    }
+
   } catch (error) {
     console.error('❌ Error initializing database:', error.message);
-    process.exit(1);
+    // Don't exit process, just log error so server can try to start
   }
 };
 
-initDb();
+export default initDb;

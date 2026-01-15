@@ -29,14 +29,13 @@ let dbConnectionError = null;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check route (CRITICAL for debugging 503)
+// Health check route
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Server is running',
     env: process.env.NODE_ENV,
-    dbStatus: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
-    dbError: dbConnectionError
+    dbStatus: 'Configured (MySQL)',
   });
 });
 
@@ -57,12 +56,20 @@ app.get('*', (req, res) => {
 // Error handler middleware
 app.use(errorHandler);
 
+import initDb from './scripts/initDb.js';
+
 // Connect to MySQL (handled by pool) and start server
-const startServer = () => {
+const startServer = async () => {
+  // Initialize Database (Create tables & Seed admin)
+  await initDb();
+
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🗄️  MySQL Database configured`);
+    if (process.env.NODE_ENV === 'production') {
+      console.log(`👤 Admin User: mkashifbukhari10@gmail.com`);
+    }
   });
 };
 
