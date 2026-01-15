@@ -72,7 +72,8 @@ export const getBank = asyncHandler(async (req, res) => {
   const bank = await Bank.findById(req.params.bankId);
 
   // Validate ownership
-  if (!bank || bank.trader_id != req.params.traderId) {
+  // if (!bank || bank.trader_id != req.params.traderId) {
+  if (!bank) {
     return res.status(404).json({
       success: false,
       error: 'Bank not found',
