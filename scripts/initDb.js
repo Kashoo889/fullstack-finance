@@ -1,8 +1,8 @@
 import db from '../config/db.js';
 
 const initDb = async () => {
-    try {
-        const createUsersTable = `
+  try {
+    const createUsersTable = `
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
@@ -13,13 +13,13 @@ const initDb = async () => {
       );
     `;
 
-        await db.execute(createUsersTable);
-        console.log('✅ Users table created or already exists');
-        process.exit(0);
-    } catch (error) {
-        console.error('❌ Error initializing database:', error.message);
-        process.exit(1);
-    }
+    await db.execute(createUsersTable);
+    console.log('✅ Users table created or already exists');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error initializing database:', error.message);
+    process.exit(1);
+  }
 };
 
 initDb();
