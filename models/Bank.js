@@ -20,10 +20,9 @@ const Bank = {
 
   // Find bank by ID
   findById: async (id) => {
+    const bankId = Number(id); // Ensure it's a number
     const query = 'SELECT * FROM banks WHERE id = ?';
-    console.log(`Bank.findById called with: ${id} (type: ${typeof id})`);
-    const [rows] = await db.execute(query, [id]);
-    console.log(`Bank.findById result:`, rows);
+    const [rows] = await db.execute(query, [bankId]);
     return rows[0];
   },
 
