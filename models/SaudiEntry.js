@@ -1,87 +1,26 @@
-import mongoose from 'mongoose';
+import db from '../config/db.js';
 
-const saudiEntrySchema = new mongoose.Schema(
-  {
-    date: {
-      type: String,
-      required: [true, 'Date is required'],
-      trim: true,
-    },
-    time: {
-      type: String,
-      required: [true, 'Time is required'],
-      trim: true,
-    },
-    refNo: {
-      type: String,
-      required: [true, 'Reference number is required'],
-      trim: true,
-      uppercase: true,
-    },
-    pkrAmount: {
-      type: Number,
-      required: [true, 'PKR amount is required'],
-      min: [0, 'PKR amount cannot be negative'],
-    },
-    riyalRate: {
-      type: Number,
-      required: [true, 'Riyal rate is required'],
-      min: [0, 'Riyal rate cannot be negative'],
-    },
-    riyalAmount: {
-      type: Number,
-      default: 0,
-    },
-    submittedSar: {
-      type: Number,
-      required: [true, 'Submitted SAR is required'],
-      min: [0, 'Submitted SAR cannot be negative'],
-      default: 0,
-    },
-    reference2: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    balance: {
-      type: Number,
-      default: 0,
-    },
+const SaudiEntry = {
+  create: async ({ date, time, refNo, pkrAmount, riyalRate, riyalAmount, submittedSar, reference2, balance }) => {
+    const query = `
+      INSERT INTO saudi_hisaab_entries (date, time, ref_no, pkr_amount, riyal_rate, riyal_amount, submitted_sar, reference2, balance)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const [result] = await db.execute(query, [date, time, refNo, pkrAmount, riyalRate, riyalAmount, submittedSar, reference2, balance]);
+    return { id: result.insertId, date, time, refNo, pkrAmount, riyalRate, riyalAmount, submittedSar, reference2, balance };
   },
-  {
-    timestamps: true,
-  }
-);
 
-// Calculate riyalAmount and balance before saving
-// RiyalAmount logic:
-//   - If PKR > 0 AND Rate > 0: RiyalAmount = PKR / Rate (auto-calculate)
-//   - Otherwise: RiyalAmount = SubmittedSAR (use submitted directly)
-// Balance logic:
-//   - Always: Balance = RiyalAmount - SubmittedSAR
-//   - When auto-calculating: Balance = (PKR/Rate) - SubmittedSAR
-//   - When using submitted: Balance = SubmittedSAR - SubmittedSAR = 0
-saudiEntrySchema.pre('save', function (next) {
-  if (this.pkrAmount > 0 && this.riyalRate > 0) {
-    // Auto-calculate: RiyalAmount = PKR / Rate
-    this.riyalAmount = this.pkrAmount / this.riyalRate;
-  } else {
-    // Use submitted SAR directly as RiyalAmount
-    this.riyalAmount = this.submittedSar;
-  }
+  findAll: async () => {
+    const query = 'SELECT * FROM saudi_hisaab_entries ORDER BY created_at DESC';
+    const [rows] = await db.execute(query);
+    return rows;
+  },
 
-  // Balance is always: RiyalAmount - SubmittedSAR
-  // When using submitted directly, this becomes 0
-  this.balance = this.riyalAmount - this.submittedSar;
-
-  next();
-});
-
-// Index for faster queries
-saudiEntrySchema.index({ date: -1 });
-saudiEntrySchema.index({ refNo: 1 }, { unique: false }); // Non-unique index for query performance
-
-const SaudiEntry = mongoose.model('SaudiEntry', saudiEntrySchema);
+  findById: async (id) => {
+    const query = 'SELECT * FROM saudi_hisaab_entries WHERE id = ?';
+    const [rows] = await db.execute(query, [id]);
+    return rows[0];
+  },
+};
 
 export default SaudiEntry;
-

@@ -1,63 +1,26 @@
-import mongoose from 'mongoose';
+import db from '../config/db.js';
 
-const bankLedgerEntrySchema = new mongoose.Schema(
-  {
-    bank: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Bank',
-      required: [true, 'Bank reference is required'],
-    },
-    date: {
-      type: String,
-      required: [true, 'Date is required'],
-      trim: true,
-    },
-    referenceType: {
-      type: String,
-      required: [true, 'Reference type is required'],
-      enum: {
-        values: ['Online', 'Cash'],
-        message: 'Reference type must be either Online or Cash',
-      },
-    },
-    amountAdded: {
-      type: Number,
-      required: [true, 'Amount added is required'],
-      min: [0, 'Amount added cannot be negative'],
-      default: 0,
-    },
-    amountWithdrawn: {
-      type: Number,
-      required: [true, 'Amount withdrawn is required'],
-      min: [0, 'Amount withdrawn cannot be negative'],
-      default: 0,
-    },
-    referencePerson: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    remainingAmount: {
-      type: Number,
-      default: 0,
-    },
+const BankLedgerEntry = {
+  create: async ({ bankId, date, referenceType, amountAdded = 0, amountWithdrawn = 0, referencePerson, remainingAmount }) => {
+    const query = `
+      INSERT INTO bank_ledger_entries (bank_id, date, reference_type, amount_added, amount_withdrawn, reference_person, remaining_amount)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    const [result] = await db.execute(query, [bankId, date, referenceType, amountAdded, amountWithdrawn, referencePerson, remainingAmount]);
+    return { id: result.insertId, bankId, date, referenceType, amountAdded, amountWithdrawn, referencePerson, remainingAmount };
   },
-  {
-    timestamps: true,
-  }
-);
 
-// Calculate remaining amount before saving
-bankLedgerEntrySchema.pre('save', function (next) {
-  this.remainingAmount = this.amountAdded - this.amountWithdrawn;
-  next();
-});
+  findByBankId: async (bankId) => {
+    const query = 'SELECT * FROM bank_ledger_entries WHERE bank_id = ? ORDER BY created_at DESC';
+    const [rows] = await db.execute(query, [bankId]);
+    return rows;
+  },
 
-// Index for faster queries
-bankLedgerEntrySchema.index({ bank: 1, date: -1 });
-bankLedgerEntrySchema.index({ date: -1 });
-
-const BankLedgerEntry = mongoose.model('BankLedgerEntry', bankLedgerEntrySchema);
+  findById: async (id) => {
+    const query = 'SELECT * FROM bank_ledger_entries WHERE id = ?';
+    const [rows] = await db.execute(query, [id]);
+    return rows[0];
+  },
+};
 
 export default BankLedgerEntry;
-

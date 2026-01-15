@@ -1,38 +1,35 @@
-import mongoose from 'mongoose';
+import db from '../config/db.js';
 
-const bankSchema = new mongoose.Schema(
-  {
-    trader: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Trader',
-      required: [true, 'Trader reference is required'],
-    },
-    name: {
-      type: String,
-      required: [true, 'Bank name is required'],
-      trim: true,
-    },
-    code: {
-      type: String,
-      required: [true, 'Bank code is required'],
-      trim: true,
-      uppercase: true,
-    },
-    totalBalance: {
-      type: Number,
-      default: 0,
-    },
+const Bank = {
+  // Create a new bank
+  create: async ({ traderId, name, code, totalBalance = 0 }) => {
+    const query = `
+      INSERT INTO banks (trader_id, name, code, total_balance)
+      VALUES (?, ?, ?, ?)
+    `;
+    const [result] = await db.execute(query, [traderId, name, code, totalBalance]);
+    return { id: result.insertId, traderId, name, code, totalBalance };
   },
-  {
-    timestamps: true,
-  }
-);
 
-// Index for faster queries
-bankSchema.index({ trader: 1 });
-bankSchema.index({ code: 1 });
+  // Find all banks for a specific trader
+  findByTraderId: async (traderId) => {
+    const query = 'SELECT * FROM banks WHERE trader_id = ? ORDER BY name ASC';
+    const [rows] = await db.execute(query, [traderId]);
+    return rows;
+  },
 
-const Bank = mongoose.model('Bank', bankSchema);
+  // Find bank by ID
+  findById: async (id) => {
+    const query = 'SELECT * FROM banks WHERE id = ?';
+    const [rows] = await db.execute(query, [id]);
+    return rows[0];
+  },
+
+  // Update bank balance
+  updateBalance: async (id, amount) => {
+    const query = 'UPDATE banks SET total_balance = total_balance + ? WHERE id = ?';
+    await db.execute(query, [amount, id]);
+  },
+};
 
 export default Bank;
-

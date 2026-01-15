@@ -1,41 +1,35 @@
-import mongoose from 'mongoose';
+import db from '../config/db.js';
 
-const traderSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, 'Trader name is required'],
-      trim: true,
-      unique: true,
-    },
-    shortName: {
-      type: String,
-      required: [true, 'Short name is required'],
-      trim: true,
-      uppercase: true,
-      maxlength: [10, 'Short name cannot exceed 10 characters'],
-    },
-    color: {
-      type: String,
-      required: [true, 'Color is required'],
-      trim: true,
-      default: 'from-blue-500 to-blue-600',
-    },
-    totalBalance: {
-      type: Number,
-      default: 0,
-    },
+const Trader = {
+  // Create a new trader
+  create: async ({ name, shortName, color, totalBalance = 0 }) => {
+    const query = `
+      INSERT INTO traders (name, short_name, color, total_balance)
+      VALUES (?, ?, ?, ?)
+    `;
+    const [result] = await db.execute(query, [name, shortName, color, totalBalance]);
+    return { id: result.insertId, name, shortName, color, totalBalance };
   },
-  {
-    timestamps: true,
-  }
-);
 
-// Index for faster queries
-traderSchema.index({ name: 1 });
-traderSchema.index({ shortName: 1 });
+  // Find all traders
+  findAll: async () => {
+    const query = 'SELECT * FROM traders ORDER BY name ASC';
+    const [rows] = await db.execute(query);
+    return rows;
+  },
 
-const Trader = mongoose.model('Trader', traderSchema);
+  // Find trader by ID
+  findById: async (id) => {
+    const query = 'SELECT * FROM traders WHERE id = ?';
+    const [rows] = await db.execute(query, [id]);
+    return rows[0];
+  },
+
+  // Update total balance
+  updateBalance: async (id, amount) => {
+    const query = 'UPDATE traders SET total_balance = total_balance + ? WHERE id = ?';
+    await db.execute(query, [amount, id]);
+  },
+};
 
 export default Trader;
-
