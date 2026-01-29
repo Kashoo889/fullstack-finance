@@ -11,7 +11,8 @@
     "postinstall": "npm run build",
     "seed:admin": "node scripts/seedAdmin.js",
     "seed:user": "node scripts/seedUser.js",
-    "update:user-role": "node scripts/updateUserRole.js"
+    "update:user-role": "node scripts/updateUserRole.js",
+    "list:users": "node scripts/listAllUsers.js"
   },
   "dependencies": {
     "express": "^4.18.2",

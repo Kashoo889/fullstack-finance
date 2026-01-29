@@ -100,31 +100,47 @@ router.post(
 
     const { email, password } = req.body;
 
-    // Find user
-    const user = await User.findByEmail(email);
-    if (!user) {
-      return res.status(401).json({ success: false, error: 'Invalid email or password' });
+    try {
+      // Find user with retry logic (handled in User model)
+      const user = await User.findByEmail(email);
+      if (!user) {
+        return res.status(401).json({ success: false, error: 'Invalid email or password' });
+      }
+
+      // Verify password
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ success: false, error: 'Invalid email or password' });
+      }
+
+      // Generate token
+      const token = generateToken(user.id);
+
+      res.status(200).json({
+        success: true,
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      // Handle database connection errors specifically
+      if (error.code === 'ECONNRESET' || 
+          error.code === 'PROTOCOL_CONNECTION_LOST' ||
+          error.message.includes('Access denied') ||
+          error.message.includes('Connection lost')) {
+        console.error('Database connection error during login:', error.message);
+        return res.status(503).json({ 
+          success: false, 
+          error: 'Database connection error. Please try again in a moment.' 
+        });
+      }
+      // Re-throw other errors to be handled by asyncHandler
+      throw error;
     }
-
-    // Verify password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ success: false, error: 'Invalid email or password' });
-    }
-
-    // Generate token
-    const token = generateToken(user.id);
-
-    res.status(200).json({
-      success: true,
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
   })
 );
 

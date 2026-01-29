@@ -8,6 +8,32 @@ export const errorHandler = (err, req, res, next) => {
   // Log error
   console.error(err);
 
+  // MySQL connection errors
+  if (err.code === 'ECONNRESET' || 
+      err.code === 'PROTOCOL_CONNECTION_LOST' ||
+      err.code === 'ETIMEDOUT' ||
+      err.message?.includes('Access denied') ||
+      err.message?.includes('Connection lost')) {
+    error = { 
+      message: 'Database connection error. Please try again.', 
+      statusCode: 503 
+    };
+  }
+
+  // MySQL duplicate entry
+  if (err.code === 'ER_DUP_ENTRY') {
+    const message = 'Duplicate entry. This record already exists.';
+    error = { message, statusCode: 400 };
+  }
+
+  // MySQL connection limit exceeded
+  if (err.code === 'ER_CON_COUNT_ERROR') {
+    error = { 
+      message: 'Too many database connections. Please try again in a moment.', 
+      statusCode: 503 
+    };
+  }
+
   // Mongoose bad ObjectId
   if (err.name === 'CastError') {
     const message = 'Resource not found';
