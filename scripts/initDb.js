@@ -90,20 +90,28 @@ const initDb = async () => {
     await db.execute(createSpecialTable);
     console.log('✅ All database tables created or verified');
 
-    // Seed Admin User
-    const [rows] = await db.execute('SELECT * FROM users WHERE email = ?', ['mkashifbukhari10@gmail.com']);
+    // Seed Users
+    const usersToSeed = [
+      { name: 'Admin', email: 'mkashifbukhari10@gmail.com', password: 'Abid@uncle', role: 'admin' },
+      { name: 'Syed Zada', email: 'syedzadas889@gmail.com', password: 'abidadmin', role: 'admin' },
+      { name: 'Abid', email: 'abid707071@gmail.com', password: 'abidadmin', role: 'admin' }
+    ];
 
-    if (rows.length === 0) {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash('Abid@uncle', salt);
+    for (const user of usersToSeed) {
+      const [rows] = await db.execute('SELECT * FROM users WHERE email = ?', [user.email]);
 
-      await db.execute(
-        'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-        ['Admin', 'mkashifbukhari10@gmail.com', hashedPassword, 'admin']
-      );
-      console.log('✅ Admin user seeded successfully');
-    } else {
-      console.log('ℹ️  Admin user already exists');
+      if (rows.length === 0) {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(user.password, salt);
+
+        await db.execute(
+          'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+          [user.name, user.email, hashedPassword, user.role]
+        );
+        console.log(`✅ Seeded user: ${user.email}`);
+      } else {
+        console.log(`ℹ️ User already exists: ${user.email}`);
+      }
     }
 
   } catch (error) {
