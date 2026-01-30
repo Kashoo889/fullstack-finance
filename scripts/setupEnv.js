@@ -11,7 +11,7 @@ NODE_ENV=production
 PORT=3000
 JWT_SECRET=your_jwt_secret_here
 
-DB_HOST=localhost
+DB_HOST=127.0.0.1
 DB_USER=u410869863_abid
 DB_PASSWORD=Abid@123uncle
 DB_NAME=u410869863_Abiddatabse

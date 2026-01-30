@@ -13,8 +13,16 @@ if (missingVars.length > 0) {
 }
 
 // Get database configuration with better defaults and validation
+// Force IPv4 by using 127.0.0.1 if localhost is specified (prevents IPv6 ::1 issues)
+let dbHost = process.env.DB_HOST || 'localhost';
+if (dbHost === 'localhost') {
+  // Force IPv4 to avoid IPv6 ::1 connection issues on shared hosting
+  dbHost = '127.0.0.1';
+  console.log('💡 Using 127.0.0.1 instead of localhost to force IPv4 connection');
+}
+
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
+  host: dbHost,
   user: process.env.DB_USER || '',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || '',
@@ -26,6 +34,8 @@ const dbConfig = {
   reconnect: true,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
+  // Force IPv4 family to prevent IPv6 resolution
+  family: 4,
   // Add socket path if provided (for shared hosting that uses Unix sockets)
   ...(process.env.DB_SOCKET_PATH && { socketPath: process.env.DB_SOCKET_PATH }),
 };
