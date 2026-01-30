@@ -131,22 +131,42 @@ router.post(
       });
     } catch (error) {
       // Handle database connection errors specifically
+      console.error('Login error:', {
+        code: error.code,
+        message: error.message,
+        host: process.env.DB_HOST || 'not set',
+        user: process.env.DB_USER || 'not set',
+        database: process.env.DB_NAME || 'not set',
+      });
+      
+      // Check for specific error types
       if (error.code === 'ECONNRESET' || 
           error.code === 'PROTOCOL_CONNECTION_LOST' ||
+          error.code === 'ECONNREFUSED' ||
+          error.code === 'ER_ACCESS_DENIED_ERROR' ||
           error.message.includes('Access denied') ||
-          error.message.includes('Connection lost')) {
-        console.error('Database connection error during login:', {
-          code: error.code,
-          message: error.message,
-          host: process.env.DB_HOST,
-          // Don't log sensitive data
-        });
+          error.message.includes('Connection lost') ||
+          error.message.includes('getaddrinfo ENOTFOUND')) {
+        
+        // Provide more specific error message
+        let errorMessage = 'Database connection error. Please try again in a moment.';
+        
+        if (error.code === 'ER_ACCESS_DENIED_ERROR' || error.message.includes('Access denied')) {
+          errorMessage = 'Database authentication failed. Please check your database credentials.';
+        } else if (error.code === 'ECONNREFUSED' || error.message.includes('ENOTFOUND')) {
+          errorMessage = 'Cannot connect to database server. Please check your database host configuration.';
+        } else if (error.code === 'ER_BAD_DB_ERROR') {
+          errorMessage = 'Database not found. Please check your database name.';
+        }
+        
         return res.status(503).json({ 
           success: false, 
-          error: 'Database connection error. Please try again in a moment.',
+          error: errorMessage,
           // In development, include more details for debugging
           ...(process.env.NODE_ENV === 'development' && { 
-            details: error.message 
+            details: error.message,
+            code: error.code,
+            host: process.env.DB_HOST,
           })
         });
       }

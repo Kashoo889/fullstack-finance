@@ -29,13 +29,35 @@ let dbConnectionError = null;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check route
-app.get('/api/health', (req, res) => {
+// Health check route with database connection test
+app.get('/api/health', async (req, res) => {
+  let dbStatus = 'Unknown';
+  let dbError = null;
+  
+  try {
+    const db = await import('./config/db.js');
+    const [rows] = await db.default.execute('SELECT 1 as test');
+    dbStatus = 'Connected';
+  } catch (error) {
+    dbStatus = 'Disconnected';
+    dbError = {
+      code: error.code,
+      message: error.message,
+    };
+  }
+  
   res.status(200).json({
     success: true,
     message: 'Server is running',
     env: process.env.NODE_ENV,
-    dbStatus: 'Configured (MySQL)',
+    dbStatus: dbStatus,
+    dbConfig: {
+      host: process.env.DB_HOST || 'not set',
+      user: process.env.DB_USER || 'not set',
+      database: process.env.DB_NAME || 'not set',
+      connectionLimit: process.env.DB_CONNECTION_LIMIT || '5',
+    },
+    ...(dbError && { dbError }),
   });
 });
 
