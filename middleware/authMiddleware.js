@@ -22,7 +22,13 @@ export const protect = asyncHandler(async (req, res, next) => {
 
   try {
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_here');
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({
+        success: false,
+        error: 'Server configuration error',
+      });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Get user from token
     req.user = await User.findById(decoded.userId);

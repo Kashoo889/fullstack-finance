@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import db from '../config/db.js';
+import db, { executeWithRetry } from '../config/db.js';
 
 const initDb = async () => {
   try {
@@ -82,12 +82,12 @@ const initDb = async () => {
       );
     `;
 
-    await db.execute(createUsersTable);
-    await db.execute(createTradersTable);
-    await db.execute(createBanksTable);
-    await db.execute(createBankLedgerTable);
-    await db.execute(createSaudiTable);
-    await db.execute(createSpecialTable);
+    await executeWithRetry(createUsersTable);
+    await executeWithRetry(createTradersTable);
+    await executeWithRetry(createBanksTable);
+    await executeWithRetry(createBankLedgerTable);
+    await executeWithRetry(createSaudiTable);
+    await executeWithRetry(createSpecialTable);
     console.log('✅ All database tables created or verified');
 
     // Seed Users
@@ -98,13 +98,13 @@ const initDb = async () => {
     ];
 
     for (const user of usersToSeed) {
-      const [rows] = await db.execute('SELECT * FROM users WHERE email = ?', [user.email]);
+      const [rows] = await executeWithRetry('SELECT * FROM users WHERE email = ?', [user.email]);
 
       if (rows.length === 0) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(user.password, salt);
 
-        await db.execute(
+        await executeWithRetry(
           'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
           [user.name, user.email, hashedPassword, user.role]
         );

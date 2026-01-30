@@ -31,7 +31,10 @@ const validateChangePassword = [
  * Generate JWT Token
  */
 const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET || 'default_secret', {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: '30d',
   });
 };
@@ -132,10 +135,19 @@ router.post(
           error.code === 'PROTOCOL_CONNECTION_LOST' ||
           error.message.includes('Access denied') ||
           error.message.includes('Connection lost')) {
-        console.error('Database connection error during login:', error.message);
+        console.error('Database connection error during login:', {
+          code: error.code,
+          message: error.message,
+          host: process.env.DB_HOST,
+          // Don't log sensitive data
+        });
         return res.status(503).json({ 
           success: false, 
-          error: 'Database connection error. Please try again in a moment.' 
+          error: 'Database connection error. Please try again in a moment.',
+          // In development, include more details for debugging
+          ...(process.env.NODE_ENV === 'development' && { 
+            details: error.message 
+          })
         });
       }
       // Re-throw other errors to be handled by asyncHandler

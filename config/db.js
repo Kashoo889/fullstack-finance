@@ -4,12 +4,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
+  host: process.env.DB_HOST || 'localhost', // Default to localhost for shared hosting compatibility
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   waitForConnections: true,
-  connectionLimit: 20, // Increased from 10 to handle more concurrent requests
+  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT) || 5, // Reduced to 5 for shared hosting (Hostinger typically allows 5-10)
   queueLimit: 0,
   // Connection timeout settings
   acquireTimeout: 60000, // 60 seconds to acquire connection
@@ -19,6 +19,8 @@ const pool = mysql.createPool({
   // Connection pool options
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
+  // Add socket path if provided (for shared hosting that uses Unix sockets)
+  ...(process.env.DB_SOCKET_PATH && { socketPath: process.env.DB_SOCKET_PATH }),
 });
 
 // Enhanced connection test with retry logic
