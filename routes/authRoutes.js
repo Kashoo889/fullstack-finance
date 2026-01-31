@@ -113,15 +113,26 @@ router.post(
     const { email, password } = req.body;
 
     try {
+      // Normalize email (lowercase) for case-insensitive lookup
+      const normalizedEmail = email.toLowerCase().trim();
+      
       // Find user with retry logic (handled in User model)
-      const user = await User.findByEmail(email);
+      const user = await User.findByEmail(normalizedEmail);
       if (!user) {
+        console.error('Login failed: User not found', { email: normalizedEmail });
         return res.status(401).json({ success: false, error: 'Invalid email or password' });
+      }
+
+      // Check if user has a password
+      if (!user.password) {
+        console.error('Login failed: User has no password', { userId: user.id, email: user.email });
+        return res.status(401).json({ success: false, error: 'Account configuration error. Please contact administrator.' });
       }
 
       // Verify password
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
+        console.error('Login failed: Password mismatch', { userId: user.id, email: user.email });
         return res.status(401).json({ success: false, error: 'Invalid email or password' });
       }
 

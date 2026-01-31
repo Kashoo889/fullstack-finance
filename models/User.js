@@ -2,7 +2,8 @@ import db, { executeWithRetry } from '../config/db.js';
 
 // Helper function to find user by email (used internally)
 const findByEmailInternal = async (email) => {
-  const query = 'SELECT * FROM users WHERE email = ?';
+  // Use LOWER() for case-insensitive email comparison
+  const query = 'SELECT * FROM users WHERE LOWER(email) = LOWER(?)';
   try {
     const [rows] = await executeWithRetry(query, [email]);
     return rows[0];
@@ -28,7 +29,9 @@ const User = {
   },
 
   findByEmail: async (email) => {
-    return findByEmailInternal(email);
+    // Normalize email to lowercase for case-insensitive lookup
+    const normalizedEmail = email.toLowerCase().trim();
+    return findByEmailInternal(normalizedEmail);
   },
 
   findById: async (id) => {
