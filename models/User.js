@@ -1,5 +1,17 @@
 import db, { executeWithRetry } from '../config/db.js';
 
+// Helper function to find user by email (used internally)
+const findByEmailInternal = async (email) => {
+  const query = 'SELECT * FROM users WHERE email = ?';
+  try {
+    const [rows] = await executeWithRetry(query, [email]);
+    return rows[0];
+  } catch (error) {
+    console.error('Error finding user by email:', error.message);
+    throw error;
+  }
+};
+
 const User = {
   create: async ({ name, email, password, role = 'user' }) => {
     const query = `
@@ -16,14 +28,7 @@ const User = {
   },
 
   findByEmail: async (email) => {
-    const query = 'SELECT * FROM users WHERE email = ?';
-    try {
-      const [rows] = await executeWithRetry(query, [email]);
-      return rows[0];
-    } catch (error) {
-      console.error('Error finding user by email:', error.message);
-      throw error;
-    }
+    return findByEmailInternal(email);
   },
 
   findById: async (id) => {
@@ -50,7 +55,7 @@ const User = {
 
   updateEmail: async (id, newEmail) => {
     // First check if email already exists
-    const existingUser = await this.findByEmail(newEmail);
+    const existingUser = await findByEmailInternal(newEmail);
     if (existingUser && existingUser.id !== id) {
       throw new Error('Email already in use');
     }
