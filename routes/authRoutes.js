@@ -27,6 +27,15 @@ const validateChangePassword = [
   body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
 ];
 
+const validateChangeEmail = [
+  body('newEmail').isEmail().withMessage('Valid email is required').normalizeEmail(),
+  body('currentPassword').notEmpty().withMessage('Current password is required for security'),
+];
+
+const validateUpdateName = [
+  body('name').notEmpty().withMessage('Name is required').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
+];
+
 /**
  * Generate JWT Token
  */
@@ -225,6 +234,99 @@ router.put(
     await User.updatePassword(user.id, hashedPassword);
 
     res.status(200).json({ success: true, message: 'Password updated successfully' });
+  })
+);
+
+/**
+ * @desc    Change user email
+ * @route   PUT /api/auth/change-email
+ * @access  Private
+ */
+router.put(
+  '/change-email',
+  protect,
+  validateChangeEmail,
+  asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { newEmail, currentPassword } = req.body;
+
+    // Get fresh user data including password
+    const user = await User.findById(req.user.id);
+
+    // Verify current password for security
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, error: 'Current password is incorrect' });
+    }
+
+    // Check if new email is different from current email
+    if (user.email.toLowerCase() === newEmail.toLowerCase()) {
+      return res.status(400).json({ success: false, error: 'New email must be different from current email' });
+    }
+
+    // Update email
+    try {
+      await User.updateEmail(user.id, newEmail);
+
+      // Get updated user data
+      const updatedUser = await User.findById(user.id);
+
+      res.status(200).json({
+        success: true,
+        message: 'Email updated successfully',
+        user: {
+          id: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          role: updatedUser.role,
+        },
+      });
+    } catch (error) {
+      if (error.message === 'Email already in use') {
+        return res.status(400).json({ success: false, error: 'This email is already registered' });
+      }
+      throw error;
+    }
+  })
+);
+
+/**
+ * @desc    Update user name
+ * @route   PUT /api/auth/update-name
+ * @access  Private
+ */
+router.put(
+  '/update-name',
+  protect,
+  validateUpdateName,
+  asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { name } = req.body;
+
+    // Update name
+    await User.updateName(req.user.id, name);
+
+    // Get updated user data
+    const updatedUser = await User.findById(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Name updated successfully',
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+      },
+    });
   })
 );
 

@@ -150,3 +150,77 @@ export const changePassword = async (
   }
 };
 
+/**
+ * Change user email
+ */
+export const changeEmail = async (
+  newEmail: string,
+  currentPassword: string
+): Promise<{ id: string; name: string; email: string; role: string }> => {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(getApiUrl('/auth/change-email'), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        newEmail,
+        currentPassword,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to change email');
+    }
+
+    return data.user;
+  } catch (error: any) {
+    console.error('Change email error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update user name
+ */
+export const updateName = async (
+  name: string
+): Promise<{ id: string; name: string; email: string; role: string }> => {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(getApiUrl('/auth/update-name'), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to update name');
+    }
+
+    return data.user;
+  } catch (error: any) {
+    console.error('Update name error:', error);
+    throw error;
+  }
+};
+

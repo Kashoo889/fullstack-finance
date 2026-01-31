@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Topbar from '@/components/Topbar';
-import { User, Lock, Loader2, CheckCircle2, XCircle } from 'lucide-react';
-import { changePassword, getCurrentUser, logout } from '@/lib/auth';
+import { User, Lock, Loader2, CheckCircle2, XCircle, Mail, Edit2 } from 'lucide-react';
+import { changePassword, changeEmail, updateName, getCurrentUser, logout } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 
 /**
@@ -15,15 +15,33 @@ const Profile = () => {
   const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
+  const [emailFormData, setEmailFormData] = useState({
+    newEmail: '',
+    currentPassword: '',
+  });
+  const [nameFormData, setNameFormData] = useState({
+    name: '',
+  });
   const [formErrors, setFormErrors] = useState<{
     currentPassword?: string;
     newPassword?: string;
     confirmPassword?: string;
+  }>({});
+  const [emailFormErrors, setEmailFormErrors] = useState<{
+    newEmail?: string;
+    currentPassword?: string;
+  }>({});
+  const [nameFormErrors, setNameFormErrors] = useState<{
+    name?: string;
   }>({});
 
   // Fetch current user data
@@ -107,6 +125,109 @@ const Profile = () => {
     }
   };
 
+  // Validate email form
+  const validateEmailForm = (): boolean => {
+    const errors: typeof emailFormErrors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailFormData.newEmail.trim()) {
+      errors.newEmail = 'New email is required';
+    } else if (!emailRegex.test(emailFormData.newEmail)) {
+      errors.newEmail = 'Please enter a valid email address';
+    } else if (emailFormData.newEmail.toLowerCase() === user?.email.toLowerCase()) {
+      errors.newEmail = 'New email must be different from current email';
+    }
+
+    if (!emailFormData.currentPassword.trim()) {
+      errors.currentPassword = 'Current password is required';
+    }
+
+    setEmailFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle email change
+  const handleChangeEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateEmailForm()) {
+      return;
+    }
+
+    try {
+      setIsChangingEmail(true);
+      const updatedUser = await changeEmail(emailFormData.newEmail, emailFormData.currentPassword);
+      setUser(updatedUser);
+
+      toast({
+        title: 'Success',
+        description: 'Email changed successfully',
+      });
+
+      // Reset form
+      setEmailFormData({
+        newEmail: '',
+        currentPassword: '',
+      });
+      setEmailFormErrors({});
+      setIsEditingEmail(false);
+    } catch (error: any) {
+      console.error('Error changing email:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to change email',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsChangingEmail(false);
+    }
+  };
+
+  // Validate name form
+  const validateNameForm = (): boolean => {
+    const errors: typeof nameFormErrors = {};
+
+    if (!nameFormData.name.trim()) {
+      errors.name = 'Name is required';
+    } else if (nameFormData.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters';
+    }
+
+    setNameFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle name update
+  const handleUpdateName = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateNameForm()) {
+      return;
+    }
+
+    try {
+      setIsUpdatingName(true);
+      const updatedUser = await updateName(nameFormData.name.trim());
+      setUser(updatedUser);
+
+      toast({
+        title: 'Success',
+        description: 'Name updated successfully',
+      });
+
+      setIsEditingName(false);
+    } catch (error: any) {
+      console.error('Error updating name:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update name',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdatingName(false);
+    }
+  };
+
   // Handle logout
   const handleLogout = () => {
     logout();
@@ -153,9 +274,150 @@ const Profile = () => {
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center">
               <User className="w-8 h-8 text-accent-foreground" />
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-foreground">{user?.name || 'User'}</h2>
-              <p className="text-muted-foreground">{user?.email}</p>
+            <div className="flex-1">
+              {/* Name Section */}
+              {!isEditingName ? (
+                <div className="flex items-center gap-2 mb-2">
+                  <h2 className="text-xl font-bold text-foreground">{user?.name || 'User'}</h2>
+                  <button
+                    onClick={() => {
+                      setIsEditingName(true);
+                      setNameFormData({ name: user?.name || '' });
+                      setNameFormErrors({});
+                    }}
+                    className="p-1 hover:bg-accent/10 rounded transition-colors"
+                    title="Edit name"
+                  >
+                    <Edit2 className="w-4 h-4 text-muted-foreground hover:text-accent" />
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleUpdateName} className="mb-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={nameFormData.name}
+                      onChange={(e) => {
+                        setNameFormData({ name: e.target.value });
+                        setNameFormErrors({});
+                      }}
+                      className={`input-field flex-1 ${nameFormErrors.name ? 'border-destructive' : ''}`}
+                      placeholder="Enter your name"
+                      autoFocus
+                      required
+                    />
+                    <button
+                      type="submit"
+                      disabled={isUpdatingName}
+                      className="btn-accent px-4 py-2 disabled:opacity-50"
+                    >
+                      {isUpdatingName ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        'Save'
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingName(false);
+                        setNameFormData({ name: '' });
+                        setNameFormErrors({});
+                      }}
+                      className="btn-outline px-4 py-2"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  {nameFormErrors.name && (
+                    <p className="text-sm text-destructive mt-1 flex items-center gap-1">
+                      <XCircle className="w-4 h-4" />
+                      {nameFormErrors.name}
+                    </p>
+                  )}
+                </form>
+              )}
+
+              {/* Email Section */}
+              {!isEditingEmail ? (
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-muted-foreground">{user?.email}</p>
+                  <button
+                    onClick={() => {
+                      setIsEditingEmail(true);
+                      setEmailFormData({ newEmail: '', currentPassword: '' });
+                      setEmailFormErrors({});
+                    }}
+                    className="p-1 hover:bg-accent/10 rounded transition-colors"
+                    title="Change email"
+                  >
+                    <Edit2 className="w-4 h-4 text-muted-foreground hover:text-accent" />
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleChangeEmail} className="mb-2 space-y-2">
+                  <input
+                    type="email"
+                    value={emailFormData.newEmail}
+                    onChange={(e) => {
+                      setEmailFormData({ ...emailFormData, newEmail: e.target.value });
+                      setEmailFormErrors({ ...emailFormErrors, newEmail: '' });
+                    }}
+                    className={`input-field w-full ${emailFormErrors.newEmail ? 'border-destructive' : ''}`}
+                    placeholder="Enter new email"
+                    autoFocus
+                    required
+                  />
+                  {emailFormErrors.newEmail && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <XCircle className="w-4 h-4" />
+                      {emailFormErrors.newEmail}
+                    </p>
+                  )}
+                  <input
+                    type="password"
+                    value={emailFormData.currentPassword}
+                    onChange={(e) => {
+                      setEmailFormData({ ...emailFormData, currentPassword: e.target.value });
+                      setEmailFormErrors({ ...emailFormErrors, currentPassword: '' });
+                    }}
+                    className={`input-field w-full ${emailFormErrors.currentPassword ? 'border-destructive' : ''}`}
+                    placeholder="Enter current password for security"
+                    required
+                  />
+                  {emailFormErrors.currentPassword && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <XCircle className="w-4 h-4" />
+                      {emailFormErrors.currentPassword}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="submit"
+                      disabled={isChangingEmail}
+                      className="btn-accent px-4 py-2 disabled:opacity-50"
+                    >
+                      {isChangingEmail ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        'Save'
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingEmail(false);
+                        setEmailFormData({ newEmail: '', currentPassword: '' });
+                        setEmailFormErrors({});
+                      }}
+                      className="btn-outline px-4 py-2"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+
               <span className="inline-block mt-2 px-3 py-1 text-xs font-medium rounded-full bg-accent/10 text-accent">
                 {user?.role === 'admin' ? 'Administrator' : 'User'}
               </span>

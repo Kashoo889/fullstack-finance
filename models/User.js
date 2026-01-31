@@ -47,6 +47,40 @@ const User = {
       throw error;
     }
   },
+
+  updateEmail: async (id, newEmail) => {
+    // First check if email already exists
+    const existingUser = await this.findByEmail(newEmail);
+    if (existingUser && existingUser.id !== id) {
+      throw new Error('Email already in use');
+    }
+
+    const query = 'UPDATE users SET email = ? WHERE id = ?';
+    try {
+      const [result] = await executeWithRetry(query, [newEmail, id]);
+      if (result.affectedRows === 0) {
+        throw new Error('User not found');
+      }
+      return true;
+    } catch (error) {
+      console.error('Error updating email:', error.message);
+      throw error;
+    }
+  },
+
+  updateName: async (id, newName) => {
+    const query = 'UPDATE users SET name = ? WHERE id = ?';
+    try {
+      const [result] = await executeWithRetry(query, [newName, id]);
+      if (result.affectedRows === 0) {
+        throw new Error('User not found');
+      }
+      return true;
+    } catch (error) {
+      console.error('Error updating name:', error.message);
+      throw error;
+    }
+  },
 };
 
 export default User;
